@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Main_Activity"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Ceili Tunebook"
+        android:id="@+id/textView"
+        android:textSize="40dp"
+        android:layout_margin="20dp" />
+
+    <Button
+        android:textSize="40dp"
+        android:layout_margin="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Open Book"
+        android:id="@+id/getBookButton" />
+
+    <Button
+        android:textSize="40dp"
+        android:layout_margin="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Browse Book Now"
+        android:id="@+id/browseBookButton" />
+
+    <Button
+        android:textSize="40dp"
+        android:layout_margin="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cache Whole Book"
+        android:id="@+id/cacheBookButton" />
+</LinearLayout>

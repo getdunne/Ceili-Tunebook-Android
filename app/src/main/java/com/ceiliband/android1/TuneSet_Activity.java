@@ -1,18 +1,18 @@
 package com.ceiliband.android1;
 
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 
-public class MainActivity extends AppCompatActivity {
+import java.io.IOException;
 
-    private MyView myView;
+public class TuneSet_Activity extends AppCompatActivity {
+
+    private TuneSet_View tuneSetView;
 
     private void GoFullScreen() {
 
@@ -34,10 +34,35 @@ public class MainActivity extends AppCompatActivity {
         //requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setContentView(R.layout.activity_main);
-        myView = (MyView)findViewById(R.id.myView);
-
+        setContentView(R.layout.tuneset_view);
+        tuneSetView = (TuneSet_View)findViewById(R.id.myView);
+        new DownloadBitmapsTask().execute();
         GoFullScreen();
+    }
+
+    private class DownloadBitmapsTask extends AsyncTask<Void, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Void... param) {
+            int count = App.tuneSet.getTuneCount();
+            try {
+                boolean allTunesDownloadedOK = true;
+                for (int i=0; i<count; i++) {
+                    Tune tune = App.tuneSet.getTune(i);
+                    if (!tune.downloadBitmap() || !tune.readCachedBitmap()) allTunesDownloadedOK = false;
+                }
+                return allTunesDownloadedOK;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (result) {
+                tuneSetView.ClearScrollPoints();
+            }
+        }
     }
 
     private Handler myHandler = new Handler();
@@ -47,11 +72,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            if (myView.yoffset < myTargetY)
+            if (tuneSetView.yoffset < myTargetY)
             {
-                myView.yoffset += 10;
-                if (myView.yoffset > myTargetY) myView.yoffset = myTargetY;
-                myView.invalidate();
+                tuneSetView.yoffset += 10;
+                if (tuneSetView.yoffset > myTargetY) tuneSetView.yoffset = myTargetY;
+                tuneSetView.invalidate();
                 myHandler.postDelayed(this, 5);
             }
         }
@@ -61,21 +86,21 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            if (myView.yoffset > myTargetY)
+            if (tuneSetView.yoffset > myTargetY)
             {
-                myView.yoffset -= 10;
-                if (myView.yoffset < myTargetY) myView.yoffset = myTargetY;
-                myView.invalidate();
+                tuneSetView.yoffset -= 10;
+                if (tuneSetView.yoffset < myTargetY) tuneSetView.yoffset = myTargetY;
+                tuneSetView.invalidate();
                 myHandler.postDelayed(this, 5);
             }
         }
     };
 
     public void ScrollForward() {
-        myTargetY = myView.GetForwardScrollTargetY();
-        if (myView.yoffset > myTargetY) {
-            myView.GetBackwardScrollTargetY();
-            myView.ScrollForward();
+        myTargetY = tuneSetView.GetForwardScrollTargetY();
+        if (tuneSetView.yoffset > myTargetY) {
+            tuneSetView.GetBackwardScrollTargetY();
+            tuneSetView.ScrollForward();
         }
         else {
             myHandler.post(myForwardRunnable);
@@ -83,10 +108,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void ScrollBackward() {
-        myTargetY = myView.GetBackwardScrollTargetY();
-        if (myView.yoffset < myTargetY) {
-            myView.GetForwardScrollTargetY();
-            myView.ScrollBackward();
+        myTargetY = tuneSetView.GetBackwardScrollTargetY();
+        if (tuneSetView.yoffset < myTargetY) {
+            tuneSetView.GetForwardScrollTargetY();
+            tuneSetView.ScrollBackward();
         }
         else {
             myHandler.post(myBackwardRunnable);
@@ -94,11 +119,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event)
+    public void onBackPressed() {
+        int count = App.tuneSet.getTuneCount();
+        for (int i=0; i<count; i++) {
+            Tune tune = App.tuneSet.getTune(i);
+            tune.releaseBitmap();
+        }
+        finish();
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event)
     {
         switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                onBackPressed();
+                return true;
             case KeyEvent.KEYCODE_ENTER:
-                myView.ScrollToStart();
+                tuneSetView.ScrollToStart();
                 return true;
             case KeyEvent.KEYCODE_DPAD_UP:
                 ScrollBackward();
@@ -106,39 +144,23 @@ public class MainActivity extends AppCompatActivity {
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 ScrollForward();
                 return true;
-            case KeyEvent.KEYCODE_0:
-            case KeyEvent.KEYCODE_1:
-            case KeyEvent.KEYCODE_2:
-            case KeyEvent.KEYCODE_3:
-            case KeyEvent.KEYCODE_4:
-            case KeyEvent.KEYCODE_5:
-            case KeyEvent.KEYCODE_6:
-            case KeyEvent.KEYCODE_7:
-            case KeyEvent.KEYCODE_8:
-            case KeyEvent.KEYCODE_9:
-                myView.SetTuneSetIndex(keyCode - KeyEvent.KEYCODE_0);
-                return true;
-            case KeyEvent.KEYCODE_C:
-                // Clear scroll points, i.e. leave only 1
-                myView.ClearScrollPoints(1);
-                return true;
             case KeyEvent.KEYCODE_R:
                 // Rebuild default scroll points
-                myView.ClearScrollPoints(0);
+                tuneSetView.ClearScrollPoints();
                 return true;
             case KeyEvent.KEYCODE_M:
                 // Modify current scroll point
-                myView.ResetScrollPoint();
+                tuneSetView.ResetScrollPoint();
                 return true;
             case KeyEvent.KEYCODE_A:
                 // Add new scroll point (insert after current)
-                myView.AddScrollPoint();
+                tuneSetView.AddScrollPoint();
                 return true;
             case KeyEvent.KEYCODE_D:
-                myView.DeleteScrollPoint();
+                tuneSetView.DeleteScrollPoint();
                 return true;
         }
-        return false;
+        return super.onKeyUp(keyCode, event);
     }
 
     @Override

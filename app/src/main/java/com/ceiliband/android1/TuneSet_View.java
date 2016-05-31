@@ -10,75 +10,76 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
-public class MyView extends View {
+public class TuneSet_View extends View {
 
     TuneSet tunes;
-    int tuneSetIndex;
     private float textHeight;
 
     // scrolling
     public float yoffset;   // current scroll position
-    private float[] ylist;  // list of positions
-    private int ycount;     // count of valid values in ylist
+    private ArrayList<Float> ylist;
     private int ycur;       // index of current scroll position in ylist
     private int speed;      // scroll speed, units per iteration
 
-    public MyView(Context context) {
+    public TuneSet_View(Context context) {
         super(context);
         init();
     }
 
-    public MyView(Context context, AttributeSet attrs) {
+    public TuneSet_View(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public MyView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public TuneSet_View(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
 
     private void init() {
+        tunes = App.tuneSet;
         textHeight = 30;
 
-        ylist = new float[50];
-        ycount = 0;
+        ylist = new ArrayList<Float>();
         ycur = 0;
         yoffset = 0;
         speed = 10;
-
-        tuneSetIndex = 0;
-        SelectTuneSet(tuneSetIndex);
     }
 
     private void dumpScrollPosList() {
-        Log.i("crap", "Scroll Points:");
-        for (int i=0; i<ycount; i++) Log.i("crap", String.format("  %d", (int)ylist[i]));
+        //Log.i("crap", "Scroll Points:");
+        //for (int i=0; i<ycount; i++) Log.i("crap", String.format("  %d", (int)ylist[i]));
     }
 
     private void InitScrollPoints(float canvasWidth, float canvasHeight) {
-        ycount = 1;
-        ylist[0] = 0;
-
+        ylist.add(0.0f);
         float y = 0;
         float hh, th;
-        int i;
-        Tune tune;
 
-        for (i = 0; i < tunes.getTuneCount() - 1; i++) {
+        for (int i = 0; i < tunes.getTuneCount() - 1; i++) {
             // Transition: halfway to next tune
-            tune = tunes.getTune(i);
+            Tune tune = tunes.getTune(i);
             hh = 0.5f * tune.getScaledHeight(canvasWidth);
             y += textHeight + hh;
             tune = tunes.getTune(i+1);
             th = tune.getScaledHeight(canvasWidth);
-            if (y + hh + 0.5f * th - ylist[ycount-1] > canvasHeight) ylist[ycount++] = y;
+            if (y + hh + 0.5f * th - ylist.get(ylist.size()-1) > canvasHeight) ylist.add(y);
             else Log.i("crap", String.format("Skip halfway thru tune %d", i));
             // Top of next tune
             y += hh;
-            if ((y + th + textHeight - ylist[ycount-1]) > canvasHeight) ylist[ycount++] = y;
+            if (y + th + textHeight - ylist.get(ylist.size()-1) > canvasHeight) ylist.add(y);
             else Log.i("crap", String.format("Skip top of tune %d", i+1));
         }
         if (tunes.getWrap()) {
@@ -86,100 +87,74 @@ public class MyView extends View {
             hh = 0.5f * tunes.getTune(tunes.getTuneCount() - 1).getScaledHeight(canvasWidth);
             y += textHeight + hh;
             th = tunes.getTune(0).getHeight();
-            if (y + hh + 0.5f * th - ylist[ycount-1] > canvasHeight) ylist[ycount++] = y;
+            if (y + hh + 0.5f * th - ylist.get(ylist.size()-1) > canvasHeight) ylist.add(y);
             else Log.i("crap", String.format("Skip halfway thru tune %d", tunes.getTuneCount()-1));
             // all the way round to 1st tune
             y += hh;
-            if ((y + th + textHeight - ylist[ycount-1]) > canvasHeight) ylist[ycount++] = y;
+            if (y + th + textHeight - ylist.get(ylist.size()-1) > canvasHeight) ylist.add(y);
             else Log.i("crap", String.format("Skip end of last tune"));
         }
         Log.i("crap", String.format("InitScrollPoints: canvas %dx%d", (int)canvasWidth, (int)canvasHeight));
         dumpScrollPosList();
     }
 
-    public void ClearScrollPoints(int count) {
-        ycount = count;
-        ycur = count-1;
-        yoffset = ylist[ycur];
+    public void ClearScrollPoints() {
+        ylist.clear();
+        ycur = 0;
+        yoffset = 0.0f;
+        invalidate();
         dumpScrollPosList();
     }
 
     public void ResetScrollPoint() {
-        ylist[ycur] = yoffset;
-        System.out.printf("Entry %d fixed to %f\n", ycur, yoffset);
+        ylist.set(ycur, yoffset);
         dumpScrollPosList();
     }
 
     public void AddScrollPoint() {
-        if (ycount < 99) {
-            ylist[ycount++] = yoffset;
-            dumpScrollPosList();
-            Arrays.sort(ylist, 0, ycount);
-        }
+        ylist.add(yoffset);
+        Collections.sort(ylist);
         dumpScrollPosList();
     }
 
     public void DeleteScrollPoint() {
-        if (ycount > 1 && ycur > 0) {
-            ycount--;
-            for (int i=ycur; i < ycount; i++) ylist[i] = ylist[i+1];
+        if (ylist.size() > 1 && ycur > 0) {
+            ylist.remove(ycur);
         }
         dumpScrollPosList();
     }
 
     public void ScrollToStart() {
         ycur = 0;
-        yoffset = ylist[ycur];
+        yoffset = ylist.get(ycur);
         invalidate();
         Log.i("crap", String.format("ycur %d yoffset %f", ycur, yoffset));
     }
 
     public void ScrollForward() {
-        if (++ycur >= ycount) ycur = 0;
-        yoffset = ylist[ycur];
+        if (++ycur >= ylist.size()) ycur = 0;
+        yoffset = ylist.get(ycur);
         invalidate();
         Log.i("crap", String.format("ycur %d yoffset %f", ycur, yoffset));
     }
 
     public void ScrollBackward() {
-        if (--ycur < 0) ycur = ycount - 1;
-        yoffset = ylist[ycur];
+        if (--ycur < 0) ycur = ylist.size() - 1;
+        yoffset = ylist.get(ycur);
         invalidate();
         Log.i("crap", String.format("ycur %d yoffset %f", ycur, yoffset));
     }
 
     public float GetForwardScrollTargetY() {
-        if (++ycur >= ycount) ycur = 0;
+        if (++ycur >= ylist.size()) ycur = 0;
         Log.i("crap", String.format("ycur %d", ycur));
-        return ylist[ycur];
+        return ylist.get(ycur);
     }
 
     public float GetBackwardScrollTargetY() {
-        if (--ycur < 0) ycur = ycount - 1;
+        if (--ycur < 0) ycur = ylist.size() - 1;
         Log.i("crap", String.format("ycur %d", ycur));
-        return ylist[ycur];
-    }
-
-    private void SelectTuneSet(int tsi) {
-        if (tsi == 0) {
-            tunes = new TuneSet(4, true);
-            tunes.SetTune(0, "/Removable/MicroSD/FlowersOfEdinburgh.JPG", "Flowers of Edinburgh", "(2A,2B)x2");
-            tunes.SetTune(1, "/Removable/MicroSD/SwallowsTail.JPG", "Swallow's Tail", "(2A,2B)x2");
-            tunes.SetTune(2, "/Removable/MicroSD/Teetotaler.JPG", "The Teetotaller", "(2A,2B)x2");
-            tunes.SetTune(3, "/Removable/MicroSD/StarOfMunster.JPG", "The Star of Munster", "(2A,2B)x2");
-        } else {
-            tunes = new TuneSet(4, false);
-            tunes.SetTune(0, "/Removable/MicroSD/DennisMurphy.JPG", "Dennis Murphy's", "(2A,2B)x2");
-            tunes.SetTune(1, "/Removable/MicroSD/RattlinBog.JPG", "Rattlin Bog", "(2A,2B)x2");
-            tunes.SetTune(2, "/Removable/MicroSD/JohnRyanPolka.JPG", "John Ryan's Polka", "(2A,2B)x2");
-            tunes.SetTune(3, "/Removable/MicroSD/DennisMurphy.JPG", "Dennis Murphy's", "1A,1B");
-        }
-    }
-
-    public void SetTuneSetIndex(int tsi) {
-        tuneSetIndex = tsi;
-        SelectTuneSet(tuneSetIndex);
-        invalidate();
+        return ylist.get(ycur);
     }
 
     @Override
@@ -191,7 +166,7 @@ public class MyView extends View {
         float canvasHeight = canvas.getHeight();
 
         // If we haven't already done so, initialize scroll points list
-        if (ycount == 0) InitScrollPoints(canvasWidth, canvasHeight);
+        if (ylist.size() == 0) InitScrollPoints(canvasWidth, canvasHeight);
 
         // Clear canvas before drawing anything
         canvas.drawColor(Color.WHITE);
@@ -213,7 +188,8 @@ public class MyView extends View {
                 // draw only images which won't be fully clipped anyway
                 Rect src = new Rect(0, 0, (int)tune.getWidth(), (int)tune.getHeight());
                 Rect dst = new Rect(0, (int)(top + textHeight), (int)canvasWidth, (int)(bot));
-                canvas.drawBitmap(tune.bitmap, src, dst, null);
+                if (tune.isBitmapReady())
+                    canvas.drawBitmap(tune.getBitmap(), src, dst, null);
                 paint.setUnderlineText(ii == 0);
                 paint.setTextAlign(Paint.Align.LEFT);
                 canvas.drawText(tune.getTitle(), textIndent, textHeight + top, paint);
@@ -221,7 +197,7 @@ public class MyView extends View {
                 canvas.drawText(tune.getRepeatNotes(), canvasWidth - textIndent, textHeight + top, paint);
             }
             top += textHeight + scaledHeight;
-            if (++ii > 3) {
+            if (++ii > tunes.getTuneCount()-1) {
                 if (tunes.getWrap()) ii = 0;   // advance image index with wrap
                 else break;
             }

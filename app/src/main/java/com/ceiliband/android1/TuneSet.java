@@ -6,36 +6,46 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.Log;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class TuneSet {
-    // tunes list and count
-    private Tune[] tunes;
-    private int tuneCount;
+    private boolean wrap;
+    private ArrayList<Tune> tunes;
 
     // wrapping and text height
-    private boolean wrap;
 
-    TuneSet(int tuneCount, boolean wrap) {
-        this.tuneCount = tuneCount;
+    TuneSet(boolean wrap) {
         this.wrap = wrap;
-
-        tunes = new Tune[tuneCount];
+        tunes = new ArrayList<Tune>();
     }
 
-    public void SetTune(int index, String path, String title, String repeatNotes) {
-        tunes[index] = new Tune(path, title, repeatNotes);
+    public void AddTune(String title, String fileName, String repeatNotes) {
+        tunes.add(new Tune(title, fileName, repeatNotes));
     }
 
     public Tune getTune(int index) {
-        return tunes[index];
+        return tunes.get(index);
     }
 
     public int getTuneCount() {
-        return tuneCount;
+        return tunes.size();
     }
 
     public boolean getWrap() {
         return wrap;
+    }
+
+    public boolean CacheAllTunes() {
+        boolean success = true;
+        for (Tune tune : tunes)
+            try {
+                if (!tune.downloadBitmap()) success = false;
+            } catch (IOException e) {
+                success = false;
+                e.printStackTrace();
+            }
+        return success;
     }
 }
