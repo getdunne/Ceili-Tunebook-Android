@@ -10,9 +10,11 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import java.io.File;
 import java.io.IOException;
 
 public class Main_Activity extends AppCompatActivity {
@@ -20,6 +22,7 @@ public class Main_Activity extends AppCompatActivity {
     private Button getBookJsonButton;
     private Button browseBookButton;
     private Button cacheBookButton;
+    private Button clearCacheButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,7 @@ public class Main_Activity extends AppCompatActivity {
         getBookJsonButton = (Button)findViewById(R.id.getBookButton);
         browseBookButton = (Button)findViewById(R.id.browseBookButton);
         cacheBookButton = (Button)findViewById(R.id.cacheBookButton);
+        clearCacheButton = (Button)findViewById(R.id.clearCacheButton);
 
         App.tuneBook = new TuneBook("KCB Big Book", App.baseUrl + "/book_json/1");
         App.book = App.tuneBook.getBook();
@@ -61,6 +65,23 @@ public class Main_Activity extends AppCompatActivity {
                     cacheBookButton.setText("Downloading tunes...");
                     new DownloadAllTunes().execute();
                 }
+            }
+        });
+
+        clearCacheButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                clearCacheButton.setText("Clearing Cache...");
+                File dir = App.context.getFilesDir();
+                File[] files = dir.listFiles();
+                if (files != null) {
+                    int i;
+                    for (i = 0; i < files.length; i++) {
+                        Log.i("netcrap", "Deleting " + files[i].getAbsolutePath());
+                        files[i].delete();
+                    }
+                }
+                getBookJsonButton.setText("Download Book table of contents");
+                clearCacheButton.setText("Clear Cache");
             }
         });
     }

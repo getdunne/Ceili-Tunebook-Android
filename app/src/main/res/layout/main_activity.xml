@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".Main_Activity"
     android:orientation="vertical"
-    android:gravity="center">
+    android:gravity="center_vertical|center_horizontal">
 
     <TextView
         android:layout_width="wrap_content"
@@ -24,6 +24,29 @@
         android:text="Open Book"
         android:id="@+id/getBookButton" />
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:textSize="40dp"
+            android:layout_margin="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cache Whole Book"
+            android:id="@+id/cacheBookButton" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear Cache"
+            android:id="@+id/clearCacheButton"
+            android:layout_margin="20dp"
+            android:textSize="40dp" />
+    </LinearLayout>
+
     <Button
         android:textSize="40dp"
         android:layout_margin="20dp"
@@ -31,12 +54,4 @@
         android:layout_height="wrap_content"
         android:text="Browse Book Now"
         android:id="@+id/browseBookButton" />
-
-    <Button
-        android:textSize="40dp"
-        android:layout_margin="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cache Whole Book"
-        android:id="@+id/cacheBookButton" />
 </LinearLayout>
