@@ -61,7 +61,7 @@ public class Tune {
 
     public boolean downloadBitmap() throws IOException {
         File file = new File(App.context.getFilesDir(), GetCachedBitmapFileName());
-        if (file.exists()) return true;
+        //if (file.exists()) return true;
         Log.i("netcrap", "Downloading " + GetCachedBitmapFileName());
         InputStream is = null;
         try {
@@ -100,7 +100,7 @@ public class Tune {
         try {
             is = App.context.openFileInput(GetCachedBitmapFileName());
             BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 2;
+            options.inSampleSize = 1;
             bitmap = BitmapFactory.decodeStream(is, null, options);
             is.close();
             width = bitmap.getWidth();
