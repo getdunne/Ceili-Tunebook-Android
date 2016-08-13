@@ -12,12 +12,14 @@ import java.util.Arrays;
 
 public class TuneSet {
     private boolean wrap;
+    private int wrapTo;
     private ArrayList<Tune> tunes;
 
     // wrapping and text height
 
-    TuneSet(boolean wrap) {
+    TuneSet(boolean wrap, int wrapTo) {
         this.wrap = wrap;
+        this.wrapTo = wrapTo;
         tunes = new ArrayList<Tune>();
     }
 
@@ -36,6 +38,8 @@ public class TuneSet {
     public boolean getWrap() {
         return wrap;
     }
+
+    public int getWrapTo() { return wrapTo; }
 
     public boolean CacheAllTunes() {
         boolean success = true;

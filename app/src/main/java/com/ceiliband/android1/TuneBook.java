@@ -121,7 +121,8 @@ public class TuneBook {
             else {
                 // wrap and list of tunes follows
                 boolean wrap = reader.nextBoolean();
-                tunes = new TuneSet(wrap);
+                int wrapTo = reader.nextInt();
+                tunes = new TuneSet(wrap, wrapTo);
                 reader.beginArray();
                 while (reader.hasNext()) {
                     reader.beginArray();

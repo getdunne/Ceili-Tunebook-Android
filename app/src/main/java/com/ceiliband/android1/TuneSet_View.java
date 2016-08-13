@@ -31,6 +31,7 @@ public class TuneSet_View extends View {
     public float yoffset;   // current scroll position
     private ArrayList<Float> ylist;
     private int ycur;       // index of current scroll position in ylist
+    private int ywrap;      // index of scroll position for start of wrap tune
     private int speed;      // scroll speed, units per iteration
 
     public TuneSet_View(Context context) {
@@ -67,6 +68,7 @@ public class TuneSet_View extends View {
         ylist.add(0.0f);
         float y = 0;
         float hh, th;
+        ywrap = 0;
 
         for (int i = 0; i < tunes.getTuneCount() - 1; i++) {
             // Transition: halfway to next tune
@@ -81,12 +83,14 @@ public class TuneSet_View extends View {
             y += hh;
             if (y + th + textHeight - ylist.get(ylist.size()-1) > canvasHeight) ylist.add(y);
             else Log.i("crap", String.format("Skip top of tune %d", i+1));
+            if (tunes.getWrap() && (i+1) == tunes.getWrapTo())
+                ywrap = ylist.size() - 1;
         }
         if (tunes.getWrap()) {
-            // halfway round to 1st tune
+            // halfway round to wrap tune
             hh = 0.5f * tunes.getTune(tunes.getTuneCount() - 1).getScaledHeight(canvasWidth);
             y += textHeight + hh;
-            th = tunes.getTune(0).getHeight();
+            th = tunes.getTune(tunes.getWrapTo()).getHeight();
             if (y + hh + 0.5f * th - ylist.get(ylist.size()-1) > canvasHeight) ylist.add(y);
             else Log.i("crap", String.format("Skip halfway thru tune %d", tunes.getTuneCount()-1));
             // all the way round to 1st tune
@@ -132,7 +136,7 @@ public class TuneSet_View extends View {
     }
 
     public void ScrollForward() {
-        if (++ycur >= ylist.size()) ycur = 0;
+        if (++ycur >= ylist.size()) ycur = ywrap;
         yoffset = ylist.get(ycur);
         invalidate();
         Log.i("crap", String.format("ycur %d yoffset %f", ycur, yoffset));
@@ -146,7 +150,7 @@ public class TuneSet_View extends View {
     }
 
     public float GetForwardScrollTargetY() {
-        if (++ycur >= ylist.size()) ycur = 0;
+        if (++ycur >= ylist.size()) ycur = ywrap;
         Log.i("crap", String.format("ycur %d", ycur));
         return ylist.get(ycur);
     }
@@ -190,7 +194,7 @@ public class TuneSet_View extends View {
                 Rect dst = new Rect(0, (int)(top + textHeight), (int)canvasWidth, (int)(bot));
                 if (tune.isBitmapReady())
                     canvas.drawBitmap(tune.getBitmap(), src, dst, null);
-                paint.setUnderlineText(ii == 0);
+                paint.setUnderlineText(ii == tunes.getWrapTo());
                 paint.setTextAlign(Paint.Align.LEFT);
                 canvas.drawText(tune.getTitle(), textIndent, textHeight + top, paint);
                 paint.setTextAlign(Paint.Align.RIGHT);
@@ -198,7 +202,7 @@ public class TuneSet_View extends View {
             }
             top += textHeight + scaledHeight;
             if (++ii > tunes.getTuneCount()-1) {
-                if (tunes.getWrap()) ii = 0;   // advance image index with wrap
+                if (tunes.getWrap()) ii -= (tunes.getTuneCount() - tunes.getWrapTo());   // advance image index with wrap
                 else break;
             }
         }
