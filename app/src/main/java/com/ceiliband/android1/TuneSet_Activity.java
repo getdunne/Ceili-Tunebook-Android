@@ -72,12 +72,14 @@ public class TuneSet_Activity extends AppCompatActivity {
 
         @Override
         public void run() {
-            if (tuneSetView.yoffset < myTargetY)
-            {
+            if (tuneSetView.yoffset < myTargetY) {
                 tuneSetView.yoffset += 10;
                 if (tuneSetView.yoffset > myTargetY) tuneSetView.yoffset = myTargetY;
                 tuneSetView.invalidate();
                 myHandler.postDelayed(this, 5);
+            }
+            else {
+                tuneSetView.ResetScrollIfAtEnd();
             }
         }
     };
@@ -86,13 +88,14 @@ public class TuneSet_Activity extends AppCompatActivity {
 
         @Override
         public void run() {
-            if (tuneSetView.yoffset > myTargetY)
-            {
+            if (tuneSetView.yoffset > myTargetY) {
                 tuneSetView.yoffset -= 10;
                 if (tuneSetView.yoffset < myTargetY) tuneSetView.yoffset = myTargetY;
                 tuneSetView.invalidate();
                 myHandler.postDelayed(this, 5);
-            }
+            } //else {
+            //    tuneSetView.ResetScrollIfAtEnd();
+            //}
         }
     };
 
@@ -105,6 +108,7 @@ public class TuneSet_Activity extends AppCompatActivity {
         else {
             myHandler.post(myForwardRunnable);
         }
+
     }
 
     public void ScrollBackward() {

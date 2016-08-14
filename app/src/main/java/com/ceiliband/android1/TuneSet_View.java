@@ -61,7 +61,8 @@ public class TuneSet_View extends View {
 
     private void dumpScrollPosList() {
         //Log.i("crap", "Scroll Points:");
-        //for (int i=0; i<ycount; i++) Log.i("crap", String.format("  %d", (int)ylist[i]));
+        //for (int i=0; i<ylist.size(); i++) Log.i("crap", String.format("  %f", ylist.get(i)));
+        //Log.i("crap", String.format("ywrap %d", ywrap));
     }
 
     private void InitScrollPoints(float canvasWidth, float canvasHeight) {
@@ -159,6 +160,13 @@ public class TuneSet_View extends View {
         if (--ycur < 0) ycur = ylist.size() - 1;
         Log.i("crap", String.format("ycur %d", ycur));
         return ylist.get(ycur);
+    }
+
+    public void ResetScrollIfAtEnd() {
+        if (tunes.getWrap() && ycur == ylist.size()-1) {
+            ycur = ywrap;
+            yoffset = ylist.get(ycur);
+        }
     }
 
     @Override
